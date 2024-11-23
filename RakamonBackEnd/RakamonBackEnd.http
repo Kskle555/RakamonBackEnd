@@ -1,0 +1,6 @@
+@RakamonBackEnd_HostAddress = http://localhost:5177
+
+GET {{RakamonBackEnd_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
