@@ -2,39 +2,72 @@ using BusinessLogic.Services;
 using DataAccess.DB;
 using DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
+using RakamonBackEnd.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
+
 // Veritabaný Baðlantýsý
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Session ekleme
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSession(options =>
+{
+    options.IdleTimeout = TimeSpan.FromMinutes(30); // Oturum süresi
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
+// CORS politikasý ekleme
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowFrontend",
+        policy =>
+        {
+            policy.WithOrigins("http://localhost:5173") // Frontend'in URL'si
+                  .AllowAnyHeader()
+                  .AllowAnyMethod()
+                  .AllowCredentials(); // Session için gerekli
+        });
+});
 
-// Baðýmlýlýklarý ekleyelim
+// Baðýmlýlýklarý ekleme
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskService, TaskService>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+builder.Services.AddScoped<IUserService, UserService>();
 
-
-// Add services to the container.
-
+// Controller servisi
 builder.Services.AddControllers();
-// Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
+
+// Swagger/OpenAPI yapýlandýrmasý
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
+// Middleware zinciri
+app.UseCors("AllowFrontend");
+app.UseHttpsRedirection();
+
+// Session kullanýmý
+app.UseSession(); // Session burada etkinleþtirilmeli
+
+// Authorization Middleware
+app.UseMiddleware<RoleBasedAuthorizationMiddleware>();
+
+// Swagger UI
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
 }
 
-app.UseHttpsRedirection();
-
+// Authorization iþlemleri
 app.UseAuthorization();
 
+// Controller haritalama
 app.MapControllers();
 
 app.Run();

@@ -2,6 +2,7 @@
 using DataAccess.Models;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using RakamonBackEnd.Middleware;
 
 
 namespace RakamonBackEnd.Controllers

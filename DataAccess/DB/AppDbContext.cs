@@ -15,5 +15,16 @@ namespace DataAccess.DB
         }
 
         public DbSet<RakamonTask> Tasks { get; set; }
+        public DbSet<User> Users { get; set; }
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+           
+            modelBuilder.Entity<RakamonTask>()
+                .HasOne(t => t.User)
+                .WithMany()
+                .HasForeignKey(t => t.UserId)
+                .OnDelete(DeleteBehavior.Restrict); 
+        }
     }
 }
