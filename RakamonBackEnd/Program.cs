@@ -2,7 +2,9 @@ using BusinessLogic.Services;
 using DataAccess.DB;
 using DataAccess.Repositories;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using RakamonBackEnd.Middleware;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -32,6 +34,9 @@ builder.Services.AddCors(options =>
         });
 });
 
+
+
+
 // Baðýmlýlýklarý ekleme
 builder.Services.AddScoped<ITaskRepository, TaskRepository>();
 builder.Services.AddScoped<ITaskService, TaskService>();
@@ -51,11 +56,12 @@ var app = builder.Build();
 app.UseCors("AllowFrontend");
 app.UseHttpsRedirection();
 
+
 // Session kullanýmý
 app.UseSession(); // Session burada etkinleþtirilmeli
 
 // Authorization Middleware
-app.UseMiddleware<RoleBasedAuthorizationMiddleware>();
+
 
 // Swagger UI
 if (app.Environment.IsDevelopment())
@@ -65,7 +71,11 @@ if (app.Environment.IsDevelopment())
 }
 
 // Authorization iþlemleri
-app.UseAuthorization();
+app.UseAuthentication(); // JWT doðrulama
+app.UseAuthorization();  // Yetkilendirme
+
+// Authorization Middleware
+app.UseMiddleware<RoleBasedAuthorizationMiddleware>();
 
 // Controller haritalama
 app.MapControllers();

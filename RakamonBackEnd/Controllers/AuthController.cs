@@ -110,8 +110,8 @@ namespace RakamonBackEnd.Controllers
                 {
                     ValidateIssuer = true,
                     ValidateAudience = true,
-                    ValidIssuer = "rakamon",
-                    ValidAudience = "rakamon",
+                    ValidIssuer = "your-app",
+                    ValidAudience = "your-app",
                     IssuerSigningKey = new SymmetricSecurityKey(key),
                     ClockSkew = TimeSpan.Zero // Token'ın süresi dolmuşsa hemen hata ver
                 }, out var validatedToken);

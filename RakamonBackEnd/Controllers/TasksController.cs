@@ -1,8 +1,11 @@
 ﻿using BusinessLogic.Services;
 using DataAccess.Models;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using RakamonBackEnd.Middleware;
+using System.IdentityModel.Tokens.Jwt;
+using System.Security.Claims;
 
 
 namespace RakamonBackEnd.Controllers
@@ -18,11 +21,51 @@ namespace RakamonBackEnd.Controllers
             _taskService = taskService;
         }
 
+
         [HttpGet]
-        public async Task<IActionResult> GetAllTasksAsync()
+         public async Task<IActionResult> GetAllTasksAsync()
         {
-            var tasks = await _taskService.GetAllTasksAsync();
-            return Ok(tasks);
+            var authHeader = HttpContext.Request.Headers["Authorization"].FirstOrDefault();
+
+            if (string.IsNullOrEmpty(authHeader) || !authHeader.StartsWith("Bearer "))
+            {
+                return Unauthorized("Token bulunamadı.");
+            }
+
+            var token = authHeader.Substring("Bearer ".Length);
+            var handler = new JwtSecurityTokenHandler();
+
+            try
+            {
+                var jsonToken = handler.ReadToken(token) as JwtSecurityToken;
+
+                var userId = jsonToken?.Claims.FirstOrDefault(claim =>
+                    claim.Type == ClaimTypes.NameIdentifier)?.Value;
+
+                var role = jsonToken?.Claims.FirstOrDefault(claim =>
+                    claim.Type == ClaimTypes.Role)?.Value;
+
+                if (string.IsNullOrEmpty(userId) || string.IsNullOrEmpty(role))
+                {
+                    return Unauthorized("Geçersiz token bilgileri.");
+                }
+
+                if (role == "admin")
+                {
+                    var tasks = await _taskService.GetAllTasksAsync();
+                    return Ok(tasks);
+                }
+                else
+                {
+                    var tasks = await _taskService.GetAllTasksAsync();
+                    var filterTasks = tasks.Where(x => x.UserId.ToString() == userId).ToList();
+                    return Ok(filterTasks);
+                }
+            }
+            catch (Exception ex)
+            {
+                return Unauthorized("Token çözümlenirken hata oluştu: " + ex.Message);
+            }
         }
 
         [HttpGet("{id}")]
