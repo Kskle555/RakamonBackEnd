@@ -45,9 +45,18 @@ namespace DataAccess.Repositories
 
         public async Task UpdateTaskAsync(RakamonTask task)
         {
-            _context.Tasks.Update(task);
-            await _context.SaveChangesAsync();
+            try
+            {
+                _context.Tasks.Update(task);
+                await _context.SaveChangesAsync();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Hata oluştu: " + ex.Message);
+                throw; // Hata detayını frontend'e yansıtmak için
+            }
         }
+
 
         public async Task DeleteTaskAsync(int id)
         {

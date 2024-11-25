@@ -18,6 +18,6 @@ namespace DataAccess.Models
 
         // Kullanıcı ile ilişki
         public int UserId { get; set; }
-        public User User { get; set; }
+        public User? User { get; set; }
     }
 }
